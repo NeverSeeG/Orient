@@ -37,6 +37,12 @@ const routes: RouteRecordRaw[] = [
             meta: { title: '单位管理', icon: 'el-icon-s-tools' },
           },
           {
+            path: '/home/homeAdmin',
+            component: () =>
+              import('@/views/admin/homeAdmin.vue'),
+            meta: { title: '首页管理', icon: 'el-icon-s-tools' },
+          },
+          {
             path: '/home/roleAdmin',
             component: () =>
               import('@/views/admin/roleAdmin.vue'),
@@ -94,7 +100,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    const sessionId = localStorage.getItem('user');
+    // const sessionId = localStorage.getItem('user');
     // if (to.path !== '/login' && !sessionId) {
     //     next('/login');
     // } else {

@@ -92,8 +92,7 @@
 
 <script lang="ts" setup>
 import { api } from "@/axios/api";
-import type { ElTree } from "element-plus";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElTree } from "element-plus";
 import { cloneDeep } from "lodash";
 import {
 getCurrentInstance,
@@ -206,15 +205,14 @@ const funcState = reactive({
 // 获取所有功能点
 const getList = () => {
   let params = {
-    node: "2",
+    node: window.node,
   };
   api.common.getFuncById(params).then((data: any) => {
     if (data.success) {
       let finalData = [
         {
           code: "0",
-          icon: "app/images/function/研发数据建模.png",
-          functionid: "2",
+          functionid: window.node,
           name: "根功能点 ",
           notes: "根节点",
           parentid: "1",
@@ -282,7 +280,12 @@ const editData = () => {
     }
   });
 };
+let nodeClickIds = "" as string;
 const deleteTree = () => {
+  if(nodeClickIds === window.node){
+    ElMessage.error('根功能点不允许删除');
+    return 
+  }
   if (nodeClickIds) {
     api.common.deleteFunc(nodeClickIds).then((data: any) => {
       console.log("data:", data);
@@ -293,9 +296,8 @@ const deleteTree = () => {
     });
   }
 };
-let nodeClickIds = "" as string;
 const nodeClick = (data: any) => {
-  nodeClickIds = data.id;
+  nodeClickIds = data.functionid;
   let form = cloneDeep(data);
   funcState.form = form;
 };

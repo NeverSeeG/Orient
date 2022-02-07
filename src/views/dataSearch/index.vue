@@ -15,6 +15,7 @@
           <el-select
             v-model="queryForm.shipowner"
             clearable
+            :disabled="shipOwnerSelectStaus"
             placeholder="请选择船东"
             style="width: 200px; margin-right: 8px"
             @change="shipOwnerChange"
@@ -178,7 +179,7 @@ import { getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 let tableMaxHeight = ref("100%");
 const { proxy } = getCurrentInstance() as any;
 let statisticsStatus = ref(false);
-let userInfo = new User().userInfo;
+let userInfo = new User();
 onMounted(() => {
   rerenderTable();
   window.addEventListener("resize", rerenderTable);
@@ -187,11 +188,12 @@ onMounted(() => {
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
     let tableBodyHeight = proxy.$refs.tableBody.clientHeight;
-    console.log("tableBodyHeight", tableBodyHeight);
+    
     tableMaxHeight.value =
       tableBodyHeight <= 0 ? "100%" : tableBodyHeight - 32 + "px";
   }
 };
+let shipOwnerSelectStaus = ref(false)
 let shipMap = new Map();
 let dataInfo = reactive({
   props: { label: "NAME", value: "VALUE" },
@@ -218,12 +220,20 @@ const queryForm = reactive({
   startTime: "",
   endTime: "",
 });
+// 获取船东下拉
+
 const getShipUnitCombo = () => {
   api.shipSummary
     .getShipUnitCombo({ userId: userInfo.userId })
     .then((data: any) => {
       if (data) {
         dataInfo.shipOwnerOptions = data;
+        shipOwnerSelectStaus.value = false
+        if(data instanceof Array && data.length ===1){
+          shipOwnerSelectStaus.value = true
+          queryForm.shipowner = data[0].VALUE;
+          shipOwnerChange(data[0].VALUE)
+        }
       }
     });
 };
@@ -375,14 +385,14 @@ const query = async () => {
     }
   }
   dataInfo.tableData = data;
-  console.log("tableData", dataInfo.tableData);
+  
 };
 // 导出
 const exportData = () => {
   let equips = proxy.$refs.tree.getCheckedNodes();
-  console.log("equipIds: ", equips);
+  
   let paraIds = proxy.$refs.paramsTree.getCheckedNodes();
-  console.log("paraIds: ", paraIds);
+  
   if (equips.length === 0) {
     ElMessage({
       message: "请先选择设备",
@@ -455,7 +465,7 @@ const exportData = () => {
     startTime: queryForm.startTime,
     endTime: queryForm.endTime,
   };
-  console.log("params", params);
+  
   api.shipSummary.exportParasData(params).then((data: any) => {
     if (data.success && data.results !== null) {
       let path = "/api/orientForm/download.rdm?fileId=" + data.results.fileid;
@@ -580,17 +590,17 @@ const headerClick = (
     Object.keys(item).forEach((key) => {
       if (chartKey.get(key)?.length) {
         if (item[key] === "开") {
-          chartKey.get(key)?.push("0");
-        } else if (item[key] === "关") {
           chartKey.get(key)?.push("1");
+        } else if (item[key] === "关") {
+          chartKey.get(key)?.push("0");
         } else {
           chartKey.get(key)?.push(item[key]);
         }
       } else {
         if (item[key] === "开") {
-          chartKey.set(key, ["0"]);
-        } else if (item[key] === "关") {
           chartKey.set(key, ["1"]);
+        } else if (item[key] === "关") {
+          chartKey.set(key, ["0"]);
         } else {
           chartKey.set(key, [item[key]]);
         }
@@ -635,7 +645,7 @@ const headerClick = (
     },
     series: series,
   };
-  console.log("option", option);
+  
   if (chartColumnProps.size > 0) {
     statisticsStatus.value = true;
   }

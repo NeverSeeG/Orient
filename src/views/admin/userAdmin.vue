@@ -264,11 +264,11 @@ onMounted(async () => {
   window.addEventListener("resize", rerenderTable);
   getTreeList();
   // 获取性别
-  enumCombobox.sex = await getEnumCombobox("u1");
+  enumCombobox.sex = await getEnumCombobox(window.sex);
   // 获取岗位
-  enumCombobox.post = await getEnumCombobox("u2");
+  enumCombobox.post = await getEnumCombobox(window.post);
   // 获取密级
-  enumCombobox.grade = await getEnumCombobox("u3");
+  enumCombobox.grade = await getEnumCombobox(window.grade);
 });
 interface EnumCombobox {
   id: string;

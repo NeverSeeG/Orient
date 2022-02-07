@@ -297,6 +297,7 @@ let treeData = ref([]);
 let treeProps = reactive({
   children: "results",
   label: "name",
+  defaultCheckedKeys: [],
 });
 
 watch(filterText, (newValue, oldValue) => {
@@ -310,7 +311,7 @@ const filterNode = (value: string, data: Tree) => {
 };
 // 获取所有功能点
 const getTreeList = () => {
-  api.common.getFuncById({ node: "2" }).then((data: any) => {
+  api.common.getFuncById({ node: window.node }).then((data: any) => {
     if (data.success) {
       treeData.value = data.results;
     }
@@ -361,27 +362,43 @@ const distributeFunc = () => {
     });
 };
 let currentRow: { id: string } = { id: "" };
+let defaultCheckedKeys = ref([]);
 const tableRowClick = (row: any) => {
   currentRow = row;
   api.common
     .treeRoleFunctions({
-      node: "root",
+      node: window.node,
       roleId: row.id,
     })
     .then((data: any) => {
       if (data.success) {
+        let treeIds = getAllTreeId(data.results, []);
+        tree.value!.setCheckedKeys(treeIds, false);
       }
     });
   assignUser(row);
 };
+
+const getAllTreeId = (data: Array<any>, treeIds: any) => {
+  data.forEach(
+    (item: { id: string; results: Array<any>; checked: Boolean }) => {
+      if (item.checked) {
+        treeIds.push(item.id);
+      }
+      if (item.results.length > 0) {
+        getAllTreeId(item.results, treeIds);
+      }
+    }
+  );
+  return treeIds;
+};
+
 // 分配用户
 let userStatus = reactive({
   assignUser: [],
   unassignUser: [],
 });
 const assignUser = async (row: any) => {
-  console.log("assignUser---------row", row);
-
   let unassignerParams = {
     roleId: row.id,
     assigned: false,

@@ -13,7 +13,7 @@
         <el-icon size="36" style="float: left">
           <Avatar />
         </el-icon>
-        <span> 张三-管理员-节能公司 </span>
+        <span> {{ user.userInfo.userName }}-{{ user.userInfo.deptName }} </span>
       </div>
       <div class="date_info">
         {{ nowdate.data }}
@@ -30,19 +30,19 @@
                 router
               >
                 <template v-for="(menu, index) in menuList" :key="index">
-                  <el-sub-menu :index="menu.route" v-if="menu.children">
+                  <el-sub-menu :index="menu.url" v-if="menu.results.length>0">
                     <template #title>
                       <el-icon><location /></el-icon>
                       <span>{{ menu.name }}</span>
                     </template>
                     <el-menu-item
-                      v-for="(menuChildren, menuChildrenIndex) in menu.children"
-                      :index="menuChildren.route"
+                      v-for="(menuChildren, menuChildrenIndex) in menu.results"
+                      :index="menuChildren.url"
                       :key="menuChildrenIndex"
                       >{{ menuChildren.name }}</el-menu-item
                     >
                   </el-sub-menu>
-                  <el-menu-item :index="menu.route" v-else>
+                  <el-menu-item :index="menu.url" v-else>
                     <el-icon><icon-menu /></el-icon>
                     <span>{{ menu.name }}</span>
                   </el-menu-item>
@@ -64,94 +64,38 @@
   </div>
 </template>
 <script lang="ts" setup>
+import { api } from "@/axios/api";
+import { User } from "@/utils/user";
 import { Location, Menu as IconMenu } from "@element-plus/icons-vue";
 import moment from "moment";
 import "moment/locale/zh-cn";
 import { onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-
+let user = reactive({ userInfo: new User() });
 moment.locale("zh-cn");
 let nowdate = reactive({
   data: "",
 });
 let screenHeight = ref(0);
 
-let menuList = reactive([
-  {
-    route: "/home/shipSummary",
-    name: "船舶汇总",
-  },
-  {
-    route: "/state",
-    name: "状态监测",
-  },
-  {
-    route: "/energy",
-    name: "能效分析",
-    children: [
-      {
-        route: "/energy",
-        name: "能效分析",
-      },
-    ],
-  },
-  {
-    route: "/dataSearch",
-    name: "数据查询",
-    children: [
-      {
-        route: "/dataSearch",
-        name: "数据查询",
-      },
-      {
-        route: "/instruction",
-        name: "指令查询",
-      },
-    ],
-  },
-  {
-    name: "系统管理",
-    children: [
-      {
-        name: "单位管理",
-        route: "/home/companyAdmin",
-      },
-      {
-        name: "用户管理",
-        route: "/home/userAdmin",
-      },
-      {
-        name: "船舶管理",
-        route: "/home/admin",
-      },
-      {
-        name: "角色管理",
-        route: "/home/roleAdmin",
-      },
-      {
-        name: "功能点管理",
-        route: "/home/funcAdmin",
-      },
-    ],
-  },
-]);
-
+let menuList = ref([]);
 onMounted(() => {
   // 时分秒动态显示
-  setInterval(function () {
+  setInterval( ()=>{
     let date = new Date();
     let day = moment(date).format("YYYY-MM-DD");
     let week = moment(date).weekday();
     let time = moment(date).format("HH:mm:ss");
     nowdate.data = day + "  " + getWeek(week) + "  " + time;
   }, 1000);
-
   rerender();
   window.addEventListener("resize", rerender);
+  // 获取功能点
+  getRoleFunc();
 });
 // 浏览器高度改变重新渲染
 const rerender = () => {
-  screenHeight.value = window.innerHeight - 16;
+  screenHeight.value = window.innerHeight;
 };
 // 获取周几
 const getWeek = (week: Number) => {
@@ -178,8 +122,28 @@ const router = useRouter();
 const handleOpen = (key: string, keyPath: string[]) => {
   console.log(key, keyPath);
 };
-const routeJump = (parmas: String) => {
+const routeJump = (parmas: string) => {
   router.push(parmas);
+};
+
+const getRoleFunc = async () => {
+  let userId = user.userInfo.userId;
+  getTreeRoleFunctions(userId)
+};
+const getTreeRoleFunctions =  (id: string) => {
+   api.common
+    .getSubFunctions({
+      node: window.node,
+      userId: id,
+    })
+    .then((data: any) => {
+      if (data.success) {
+        console.log('getSubFunctions',data);
+        if(data.success) {
+          menuList.value = data.results;
+        }
+      }
+    });
 };
 </script>
 <style lang="scss" scoped>
@@ -208,7 +172,7 @@ const routeJump = (parmas: String) => {
 
   .user_info {
     height: 100%;
-    width: 200px;
+    width: 285px;
     color: #ffffff;
     float: left;
   }

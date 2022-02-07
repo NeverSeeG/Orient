@@ -17,6 +17,7 @@
             clearable
             placeholder="请选择船东"
             style="width: 200px; margin-right: 8px"
+            :disabled="shipOwnerSelectStaus"
             @change="shipOwnerChange"
             @clear="shipOwnerClear"
           >
@@ -152,7 +153,7 @@ const rerenderTable = () => {
       tableBodyHeight <= 0 ? "100%" : tableBodyHeight - 32 + "px";
   }
 };
-let userInfo = new User().userInfo;
+let userInfo = new User();
 let dataInfo = reactive({
   props: { label: "NAME", value: "VALUE" },
   paramsProps: { label: "NAME_4129", value: "NO_4129" },
@@ -173,12 +174,19 @@ const queryForm = reactive({
   startTime: "",
   endTime: "",
 });
+let shipOwnerSelectStaus = ref(false);
 const getShipUnitCombo = () => {
   api.shipSummary
     .getShipUnitCombo({ userId: userInfo.userId })
     .then((data: any) => {
       if (data) {
         dataInfo.shipOwnerOptions = data;
+        shipOwnerSelectStaus.value = false;
+        if (data instanceof Array && data.length === 1) {
+          shipOwnerSelectStaus.value = true;
+          queryForm.shipowner = data[0].VALUE;
+          shipOwnerChange(data[0].VALUE);
+        }
       }
     });
 };

@@ -15,6 +15,7 @@
           <el-select
             v-model="queryForm.shipOwner"
             clearable
+            :disabled="shipOwnerStatus"
             placeholder="请选择船东"
             style="width: 200px; margin-right: 8px"
             @change="shipOwnerChange"
@@ -112,7 +113,7 @@ let queryForm = reactive({
   no: "",
 });
 const { proxy } = getCurrentInstance() as any;
-let userInfo = new User().userInfo;
+let userInfo = new User();
 let dataInfo = reactive({
   // 表格数据
   tableData: [],
@@ -127,6 +128,7 @@ onMounted(() => {
   getShipUnitCombo();
   queryAll();
 });
+let shipOwnerStatus = ref(false)
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
     let tableBodyHeight = proxy.$refs.tableBody.clientHeight;
@@ -145,6 +147,12 @@ const getShipUnitCombo = () => {
       console.log("getShipUnitCombo", data);
       if (data) {
         dataInfo.shipOwnerOptions = data;
+        shipOwnerStatus.value = false
+        if(data instanceof Array&&data.length  === 1){
+          queryForm.shipOwner = data[0].value;
+          shipOwnerStatus.value = true
+          shipOwnerChange(data[0].VALUE)
+        }
       }
     });
 };
@@ -248,7 +256,7 @@ const getList = () => {
 }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
-  border-bottom: 0px solid var(--el-table-border-color);
+  border-bottom: 1px solid var(--el-table-border-color);
 }
 ::v-deep.el-table {
   --el-table-bg-color: ;

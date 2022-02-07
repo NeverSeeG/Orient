@@ -7,8 +7,11 @@
   <div class="main">
     <div class="carousel_div">
       <el-carousel @change="carouselChange">
-        <el-carousel-item v-for="(item, index) in imgList" :key="index">
-          <img :src="item.url" style="height: 100%; width: 100%" />
+        <el-carousel-item v-for="(item, index) in fileList" :key="index">
+          <img
+            :src="'/api/gasExport/getMainPicForFileId/' + item.FILEID + '.rdm'"
+            style="height: 100%; width: 100%"
+          />
         </el-carousel-item>
       </el-carousel>
     </div>
@@ -18,44 +21,27 @@
   </div>
 </template>
 <script lang="ts" setup>
-import loginBackground from "@/assets/loginBackground.png";
-import loginbox from "@/assets/loginbox.png";
-import login_icon from "@/assets/login_icon.png";
-import Vector from "@/assets/Vector.png";
-import { reactive, ref } from "vue";
-let imgList = reactive([
-  {
-    url: Vector,
-  },
-  {
-    url: loginbox,
-  },
-  {
-    url: loginBackground,
-  },
-  {
-    url: login_icon,
-  },
-]);
-let content = ref("周日");
+import { api } from "@/axios/api";
+import { onMounted, ref } from "vue";
+onMounted(() => {
+  getImgAndDesc();
+});
+let content = ref("");
 const carouselChange = (index: number) => {
-  console.log("index: " + index);
-  switch (index) {
-    case 0:
-      content.value = "周日";
-      break;
-    case 1:
-      content.value = "周一";
-      break;
-    case 2:
-      content.value = "周二";
-      break;
-    case 3:
-      content.value = "周三";
-      break;
-    default:
-      break;
-  }
+  console.log(
+    "fileList.value[index].FILEDESCRIPTION",
+    fileList.value[index].FILEDESCRIPTION
+  );
+  content.value = fileList.value[index].FILEDESCRIPTION || "";
+};
+let fileList = ref([]);
+const getImgAndDesc = () => {
+  const results = api.homeAdmin.findDefMainPic().then((data: any) => {
+    if (data && data instanceof Array) {
+      fileList.value = data;
+      content.value = data[0].FILEDESCRIPTION;
+    }
+  });
 };
 </script>
 <style scoped lang="scss">
@@ -81,11 +67,12 @@ const carouselChange = (index: number) => {
   min-height: 300px;
 }
 .introduction {
-  height: calc(35% - 10px);
+  height: calc(35% - 50px);
   margin-top: 8px;
-  width: 100%;
   border: 1px solid #00bbff;
   box-shadow: inset 1px -1px 25px #00ccff;
   border-radius: 8px;
+  padding: 16px;
+  display: flex;
 }
 </style>

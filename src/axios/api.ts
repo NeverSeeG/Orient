@@ -3,7 +3,7 @@ import { Request } from "@/axios/request";
 class api {
   /* api接口模块 */
   public static common = {
-    login: (params?: any) => Request.get("/api/doLogin.rdm", params),
+    login: (params?: any) => Request.post("/api/gasShip/shipLogin.rdm", params),
     getUserInfo: (params?: any) =>
       Request.get("/api/gasShip/findUser.rdm", params),
     genres: () => Request.get("/api/modelData/getAllModelData.rdm"),
@@ -61,6 +61,9 @@ class api {
     // 获取所有功能点
     getFuncById: (params?: any) =>
       Request.get("/api/func/getByPid.rdm", params),
+    // 查询当前用户下的 功能点列表
+    getSubFunctions: (params?: any) =>
+      Request.get("/api/func/getSubFunctions1.rdm", params),
     // 创建功能点
     createFunc: (params?: any) =>
       Request.formData("/api/func/create.rdm", params),
@@ -198,6 +201,42 @@ class api {
       Request.customer("/api/gasImport/importEquipParasData.rdm", params, data),
     deleteData: (params?: any) =>
       Request.get("/api/gasShip/deleteShipData.rdm", params),
+  };
+
+  public static homeAdmin = {
+    getList: (params?: any) =>
+      Request.get("/api/gasShip/findMainPic.rdm", params),
+    deleteImg: (fileIds: string) => {
+      return axios({
+        url: "/api/gasShip/deleteMainPic.rdm",
+        method: "delete",
+        params: {
+          fileIds: fileIds,
+        },
+      });
+    },
+    updateMainPicState: (params?: any) =>
+      Request.post("/api/gasShip/updateMainPicState.rdm", params),
+    updateMainPicDesc: (params?: any) =>
+      Request.post("/api/gasShip/updateMainPicDesc.rdm", params),
+    getFile: (file: string) =>{
+      return axios({
+        url:`/api/gasExport/getMainPicForFileId/${file}.rdm`,
+        method: "GET",
+        responseType: 'blob',
+      })
+    },
+    saveData: (file, desc) => {
+      return axios({
+        url: "/api/gasImport/importMainPic.rdm",
+        method: "post",
+        data: file,
+        params: {
+          desc,
+        },
+      });
+    },
+    findDefMainPic:()=> Request.get("/api//gasShip/findDefMainPic.rdm")
   };
 }
 

@@ -51,7 +51,7 @@
               color: '#FFFFFF',
             }"
           >
-            <el-table-column type="index" width="50" fixed="left" />
+            <el-table-column type="index" label="序号" width="50" fixed="left" />
             <el-table-column prop="ShipNo" label="船舶代号" width="150" />
             <el-table-column prop="ShipName" label="船舶名称" />
             <el-table-column prop="ShipRoute" label="航线" />
@@ -168,8 +168,8 @@ import { Search, SetUp, View } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
 let tableMaxHeight = ref("100%");
-let userInfo = new User().userInfo;
-const { proxy } = getCurrentInstance();
+let userInfo = new User();
+const { proxy } = getCurrentInstance() as any;
 const no = ref("");
 const dialogVisible = ref(false);
 let dataInfo = reactive({
@@ -321,7 +321,7 @@ const detail = (row: { ShipName: String; ShipNo: String }) => {
 // }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
-  border-bottom: 0px solid var(--el-table-border-color);
+  border-bottom: 1px solid var(--el-table-border-color);
 }
 ::v-deep .el-table {
   --el-table-bg-color: ;

@@ -11,15 +11,12 @@
           @submit.prevent="handleSubmit"
         >
           <div class="login-form__header">
-            <img
-              :src="login_icon"
-              style="position: absolute; top: 60px"
-            />
+            <img :src="login_icon" style="position: absolute; top: 60px" />
             <h3 class="login-title">新型节能产品数据中心</h3>
           </div>
           <el-form-item prop="account">
             <el-input
-              v-model="user.account"
+              v-model="user.userName"
               placeholder="请输入用户名"
               prefix-icon="Avatar"
             >
@@ -28,7 +25,7 @@
           <el-form-item prop="pwd">
             <el-input
               style="width: 100%"
-              v-model="user.pwd"
+              v-model="user.password"
               type="password"
               placeholder="请输入密码"
               prefix-icon="Lock"
@@ -54,30 +51,42 @@
 import login_icon from "@/assets/login_icon.png";
 import { api } from "@/axios/api";
 import router from "@/router";
+import { ElMessage } from "element-plus";
 import { computed, reactive, ref } from "vue";
 
 const user = reactive({
-  account: "guest1",
-  pwd: "123456",
+  userName: "guest1",
+  password: "123",
 });
 const scrollerHeight = computed(() => {
   // 自定义高度需求
-  return window.innerHeight - 20;
+  return window.innerHeight;
 });
 const loading = ref(false);
 const rules = ref({
-  account: [{ required: true, message: "请输入账号", trigger: "change" }],
-  pwd: [{ required: true, message: "请输入密码", trigger: "change" }],
+  userName: [{ required: true, message: "请输入账号", trigger: "change" }],
+  password: [{ required: true, message: "请输入密码", trigger: "change" }],
 });
 const handleSubmit = async () => {
-  api.common.login().then((data) => {
-    if (data) {
-      router.push("/home");
-    }
-  });
-  api.common.getUserInfo({userName:user.account}).then((data) => {
-    localStorage.setItem("user", JSON.stringify(data))
-  })
+  loading.value = true;
+  api.common
+    .login(user)
+    .then((data: any) => {
+      loading.value = false;
+      if (data.success) {
+        api.common.getUserInfo({ userName: user.userName }).then((data) => {
+          router.push("/home");
+          localStorage.setItem("user", JSON.stringify(data));
+        });
+      } else {
+        ElMessage.error(data.msg);
+      }
+    })
+    .catch((error) => {
+      loading.value = false;
+      ElMessage.error(error);
+    });
+  // 查询用户信息
 };
 </script>
 
