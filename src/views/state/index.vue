@@ -128,7 +128,7 @@ onMounted(() => {
   getShipUnitCombo();
   queryAll();
 });
-let shipOwnerStatus = ref(false)
+let shipOwnerStatus = ref(false);
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
     let tableBodyHeight = proxy.$refs.tableBody.clientHeight;
@@ -147,11 +147,11 @@ const getShipUnitCombo = () => {
       console.log("getShipUnitCombo", data);
       if (data) {
         dataInfo.shipOwnerOptions = data;
-        shipOwnerStatus.value = false
-        if(data instanceof Array&&data.length  === 1){
+        shipOwnerStatus.value = false;
+        if (data instanceof Array && data.length === 1) {
           queryForm.shipOwner = data[0].value;
-          shipOwnerStatus.value = true
-          shipOwnerChange(data[0].VALUE)
+          shipOwnerStatus.value = true;
+          shipOwnerChange(data[0].VALUE);
         }
       }
     });
@@ -191,16 +191,18 @@ const getList = () => {
   });
 };
 
-const handleClick = (row:any) => {
-  console.log('row',row);
-  let url = ''
-  if(row.ShipNo==='12000DWT'){
-    url = "http://103.46.128.49:15114/dashboard/f695a1d0-4e7e-11ec-a0a2-35367d7921d2?publicId=15fd5600-321c-11ec-bc2a-899e01c28552"
-  }else if (row.ShipNo==='WindRotor1'){
-     url = "http://103.46.128.49:15114/dashboard/89dad170-3234-11ec-9129-736ed14e2d26?publicId=15fd5600-321c-11ec-bc2a-899e01c28552"
+const handleClick = (row: any) => {
+  console.log("row", row);
+  let url = "";
+  if (row.ShipNo === "12000DWT") {
+    url =
+      "http://103.46.128.49:15114/dashboard/f695a1d0-4e7e-11ec-a0a2-35367d7921d2?publicId=15fd5600-321c-11ec-bc2a-899e01c28552";
+  } else if (row.ShipNo === "WindRotor1") {
+    url =
+      "http://103.46.128.49:15114/dashboard/89dad170-3234-11ec-9129-736ed14e2d26?publicId=15fd5600-321c-11ec-bc2a-899e01c28552";
   }
-  window.open(url)
-}
+  window.open(url);
+};
 </script>
 <style lang="scss" scoped>
 .main {
@@ -276,14 +278,14 @@ const handleClick = (row:any) => {
   --el-table-row-hover-bg-color: ;
 }
 ::v-deep .el-table__fixed::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 1px !important;
-    background-color: #04a0ce;
-    z-index: 4;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
 }
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
