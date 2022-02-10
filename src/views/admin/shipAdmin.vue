@@ -81,7 +81,13 @@
                   '/api/gasImport/importEquipParasData/' + scope.row.ID + '.rdm'
                 "
               >
-                <el-button slot="trigger" type="text" size="small">
+                <el-button
+                  style="vertical-align: middle"
+                  slot="trigger"
+                  type="text"
+                  size="small"
+                  :icon="Upload"
+                >
                   导入模型
                 </el-button>
               </el-upload>
@@ -92,7 +98,7 @@
                 </el-icon>
                 <span style="vertical-align: middle">检测管理</span></el-button
               >
-              <el-button type="text" size="small">
+              <el-button type="text" size="small" @click="setUSer(scope.row)">
                 <el-icon style="vertical-align: middle">
                   <User />
                 </el-icon>
@@ -205,8 +211,91 @@
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="updateData" type="primary" v-loading="updateDataLoading">保存</el-button>
+        <el-button
+          @click="updateData"
+          type="primary"
+          v-loading="updateDataLoading"
+          >保存</el-button
+        >
         <el-button @click="dialogVisible = false">关闭</el-button>
+      </span>
+    </template>
+  </el-dialog>
+  <el-dialog v-model="userDialog" title="设置用户" width="50%" append-to-body>
+    <div class="userDialogContent">
+      <div
+        style="
+          height: 100%;
+          width: 200px;
+          float: left;
+          margin-right: 10px;
+        "
+        :style="{ boxShadow: 'var(--el-box-shadow-base)' }"
+      >
+        <el-tree
+          style="height: 100%"
+          ref="tree"
+          :data="deptTree.treeData"
+          node-key="id"
+          :expand-on-click-node="false"
+          :default-expand-all="true"
+          highlight-current
+          :props="deptTree.treeProps"
+          :draggable="false"
+          @node-click="nodeClick"
+        ></el-tree>
+      </div>
+      <div class="userTable">
+        <div class="tab_pane_content_title">
+          <div style="float: left; width: 100px">用户信息</div>
+          <div
+            style="
+              float: right;
+              height: 100%;
+              width: calc(100% - 100px);
+              display: flex;
+              align-items: center;
+              justify-content: flex-end;
+            "
+          >
+            <el-checkbox
+              style="width: 60px; float: right"
+              label="全选"
+              v-model="checkAllUnAssign"
+              :indeterminate="isIndeterminate"
+              @change="handleUnAssignedCheckAllChange"
+            ></el-checkbox>
+          </div>
+        </div>
+        <div class="tab_pane_content_check">
+          <el-checkbox-group
+            size="medium"
+            v-model="unAssignedList"
+            @change="handleUnAssignedChange"
+          >
+            <el-row :gutter="20">
+              <el-col style="margin-top:8px"
+                :span="8"
+                v-for="(item, index) in userTableData"
+                :key="index"
+              >
+                <el-checkbox class="item" border :label="item.id">
+                  <div class="overContentWrapper" :title="item.allName">
+                    <div class="overContent">
+                      <span>{{ item.allName }}</span>
+                    </div>
+                  </div>
+                </el-checkbox>
+              </el-col>
+            </el-row>
+          </el-checkbox-group>
+        </div>
+      </div>
+    </div>
+    <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="assignUser" type="primary" v-loading="assignUserLoading">保存</el-button>
+        <el-button @click="userDialog = false">关闭</el-button>
       </span>
     </template>
   </el-dialog>
@@ -216,8 +305,14 @@
 import { api } from "@/axios/api";
 import { Edit, User, View, Plus } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import { getCurrentInstance, onMounted, reactive, ref } from "vue";
+import { getCurrentInstance, onMounted, reactive, ref, nextTick } from "vue";
+import { cloneDeep } from "lodash";
 let tableMaxHeight = ref("100%");
+let unAssignName = ref("");
+let checkAllAssign = ref(false);
+let checkAllUnAssign = ref(false);
+let isIndeterminate = ref(false);
+let unAssignedList = ref([]);
 const { proxy } = getCurrentInstance() as any;
 let visible = ref(false);
 onMounted(() => {
@@ -225,6 +320,7 @@ onMounted(() => {
   window.addEventListener("resize", rerenderTable);
   getList();
   getDeptList();
+  getTreeList();
 });
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
@@ -311,43 +407,49 @@ const getList = () => {
   });
 };
 const formRef = ref(null);
-let updateDataLoading = ref(false)
+let updateDataLoading = ref(false);
 const updateData = () => {
-  updateDataLoading.value = true
+  updateDataLoading.value = true;
   formRef.value.validate((valid: Boolean) => {
     if (valid) {
       if (crudStatus.value === "add") {
-        api.ship.insertShipData(detailForm).then((data: any) => {
-          if (data.success) {
-            updateDataLoading.value =false
-            ElMessage.success("保存成功");
-            dialogVisible.value = false;
-            getList();
-          }else{
-            updateDataLoading.value =false
-            ElMessage.error("保存失败");
-          }
-        }).catch((error:any) => {
-          updateDataLoading.value =false
-        });
+        api.ship
+          .insertShipData(detailForm)
+          .then((data: any) => {
+            if (data.success) {
+              updateDataLoading.value = false;
+              ElMessage.success("保存成功");
+              dialogVisible.value = false;
+              getList();
+            } else {
+              updateDataLoading.value = false;
+              ElMessage.error("保存失败");
+            }
+          })
+          .catch((error: any) => {
+            updateDataLoading.value = false;
+          });
       } else if (crudStatus.value === "edit") {
-        api.ship.updateData(detailForm).then((data: any) => {
-          console.log("data", data);
-          if (data.success) {
-            updateDataLoading.value =false
-            ElMessage.success("修改成功");
-            dialogVisible.value = false;
-            getList();
-          }else{
-            updateDataLoading.value =false
-            ElMessage.success("修改失败");
-          }
-        }).catch(error => {
-          updateDataLoading.value =false
-        });
+        api.ship
+          .updateData(detailForm)
+          .then((data: any) => {
+            console.log("data", data);
+            if (data.success) {
+              updateDataLoading.value = false;
+              ElMessage.success("修改成功");
+              dialogVisible.value = false;
+              getList();
+            } else {
+              updateDataLoading.value = false;
+              ElMessage.success("修改失败");
+            }
+          })
+          .catch((error) => {
+            updateDataLoading.value = false;
+          });
       }
-    }else{
-      updateDataLoading.value=false
+    } else {
+      updateDataLoading.value = false;
     }
   });
 };
@@ -401,6 +503,103 @@ const deptNodeClick = (node: any, data: any) => {
   detailForm.unit = node.name;
   detailForm.departmentId = node.id;
   visible.value = false;
+};
+let deptTree = reactive({
+  treeData: [],
+  treeProps: {
+    children: "children",
+    label: "name",
+  },
+});
+const getTreeList = () => {
+  api.common.deptTreeList({ node: "-1" }).then((data: any) => {
+    if (data.success) {
+      deptTree.treeData = data.results;
+    }
+    nextTick(() => {
+      document.querySelector(".tree .el-tree-node__content") &&
+        document.querySelector(".tree .el-tree-node__content").click();
+    });
+  });
+};
+let currentDeptId: string = "";
+const nodeClick = (data: any) => {
+  currentDeptId = data.id;
+  getUserList();
+};
+let userTableData = ref([]);
+const getUserList = () => {
+  let params = {
+    page: 1,
+    limit: 10000,
+    extraFilter: JSON.stringify({
+      depFilter: {
+        in: currentDeptId,
+      },
+    }),
+  };
+  api.common.userList(params).then((data: any) => {
+    if (data.success) {
+      userTableData.value = data.results;
+    }
+  });
+};
+let userDialog = ref(false);
+// 绑定用户
+let shipId = "";
+const setUSer = async (row: any) => {
+  shipId = row.ID;
+  let bindUser = await findUserForShip(row.ID);
+  let assignData: string[] = [];
+  bindUser.forEach((user: { userId: string }) => {
+    assignData.push(user.userId);
+  });
+  unAssignedList.value = assignData;
+  userDialog.value = true;
+};
+
+// 通过船舶ID获取绑定的用户
+const findUserForShip = async (shipId: string) => {
+  const results = await api.ship
+    .findUserForShip({ shipId: shipId })
+    .then((data: any) => {
+      return data;
+    });
+  return results;
+};
+
+const handleUnAssignedChange = (value: any) => {
+  let checkedCount = value.length;
+  checkAllUnAssign.value = checkedCount === userTableData.value.length;
+  isIndeterminate.value =
+    checkedCount > 0 && checkedCount < userTableData.value.length;
+};
+
+const handleUnAssignedCheckAllChange = (val: any) => {
+  let data: any = [];
+  userTableData.value.forEach((item: { id: string }) => {
+    data.push(item.id);
+  });
+  unAssignedList.value = val ? data : [];
+  isIndeterminate.value = false;
+};
+let assignUserLoading = ref(false)
+const assignUser = () => {
+  assignUserLoading.value = true
+  api.ship
+    .insertShipUser({ shipId: shipId, userId: unAssignedList.value.join(",") })
+    .then((data: any) => {
+      if(data.success){
+        userDialog.value = false;
+        assignUserLoading.value = false
+      }else{
+        ElMessage.error('关联用户失败,请重试')
+        userDialog.value = false;
+        assignUserLoading.value = false
+      }
+    }).catch((error: any) => {
+      assignUserLoading.value = false
+    });
 };
 </script>
 
@@ -561,5 +760,85 @@ const deptNodeClick = (node: any, data: any) => {
 
 ::v-deep .el-dialog {
   --el-dialog-bg-color: #131e3c;
+}
+.userDialogContent {
+  width: 100%;
+  height: 500px;
+}
+
+.userTable {
+  height: 100%;
+  width: calc(100% - 250px);
+  float: left;
+  padding: 20px;
+}
+
+.tab_pane_content_title {
+  width: 100%;
+  height: 64px;
+  line-height: 64px;
+  font-size: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid #d2d7de;
+}
+
+.tab_pane_content_check {
+  padding: 16px;
+  width: 100%;
+  height: calc(100% - 112px);
+  overflow-y: auto;
+
+  .item {
+    height: 40px;
+    width: 100% !important;
+    line-height: 40px;
+    text-align: left;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+.overContentWrapper {
+  width: 100%;
+  height: 40px;
+}
+
+::v-deep {
+  .el-checkbox__input {
+    width: 14px;
+  }
+
+  .el-checkbox__label {
+    width: calc(100% - 14px);
+    line-height: 40px;
+  }
+}
+
+::v-deep .el-checkbox.is-bordered + .el-checkbox.is-bordered {
+  margin-left: 0;
+}
+
+.overContent {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+::v-deep {
+  .el-checkbox__input {
+    width: 14px;
+  }
+
+  .el-checkbox__label {
+    width: calc(100% - 14px);
+    line-height: 40px;
+  }
+}
+
+.overContentWrapper {
+  width: 100%;
+  height: 40px;
 }
 </style>

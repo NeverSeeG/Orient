@@ -24,11 +24,13 @@ class api {
     },
     deptList: (params: any) => Request.get("/api/dept/getByPid.rdm", params),
     deptTreeList: (params: any) => Request.get("/api/dept/list.rdm", params),
-    saveDept: (params?: any) => Request.formData("/api/dept/create.rdm", params),
-    updateDept: (params?: any) => Request.formData("/api/dept/update.rdm", params),
+    saveDept: (params?: any) =>
+      Request.formData("/api/dept/create.rdm", params),
+    updateDept: (params?: any) =>
+      Request.formData("/api/dept/update.rdm", params),
     deleteDept: (toDelIds: string) => {
       return axios({
-        url: "/api/role/delete.rdm",
+        url: "/api/dept/delete.rdm",
         method: "delete",
         params: {
           toDelIds: toDelIds,
@@ -201,6 +203,16 @@ class api {
       Request.customer("/api/gasImport/importEquipParasData.rdm", params, data),
     deleteData: (params?: any) =>
       Request.get("/api/gasShip/deleteShipData.rdm", params),
+
+    findUserForShip: (params?: any) =>
+      Request.get("/api/gasShip/findUserForShipId.rdm", params),
+    /**
+     * 绑定船舶跟用户关系
+     * @param params shipId（船舶id）、userId（用户id）
+     * @returns
+     */
+    insertShipUser: (params?: any) =>
+      Request.formData("/api/gasShip/insertShipUser.rdm", params),
   };
 
   public static homeAdmin = {
@@ -219,12 +231,12 @@ class api {
       Request.post("/api/gasShip/updateMainPicState.rdm", params),
     updateMainPicDesc: (params?: any) =>
       Request.post("/api/gasShip/updateMainPicDesc.rdm", params),
-    getFile: (file: string) =>{
+    getFile: (file: string) => {
       return axios({
-        url:`/api/gasExport/getMainPicForFileId/${file}.rdm`,
+        url: `/api/gasExport/getMainPicForFileId/${file}.rdm`,
         method: "GET",
-        responseType: 'blob',
-      })
+        responseType: "blob",
+      });
     },
     saveData: (file, desc) => {
       return axios({
@@ -236,7 +248,7 @@ class api {
         },
       });
     },
-    findDefMainPic:()=> Request.get("/api//gasShip/findDefMainPic.rdm")
+    findDefMainPic: () => Request.get("/api//gasShip/findDefMainPic.rdm"),
   };
 }
 
