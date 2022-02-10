@@ -55,7 +55,11 @@
                 @click="editRow(scope.row)"
                 >编辑</el-button
               >
-              <el-button type="text" size="small" @click="deleteData(scope.row.ID)">
+              <el-button
+                type="text"
+                size="small"
+                @click="deleteData(scope.row.ID)"
+              >
                 <el-icon style="color: #c75b5f; vertical-align: middle">
                   <delete /> </el-icon
                 ><span style="color: #c75b5f; vertical-align: middle"
@@ -73,7 +77,9 @@
                 :show-file-list="false"
                 :on-change="changeXmlFile"
                 :http-request="importXml(scope.row.ID)"
-                :action="'/api/gasImport/importEquipParasData/'+scope.row.ID+'.rdm'"
+                :action="
+                  '/api/gasImport/importEquipParasData/' + scope.row.ID + '.rdm'
+                "
               >
                 <el-button slot="trigger" type="text" size="small">
                   导入模型
@@ -115,7 +121,12 @@
     width="40%"
     append-to-body
   >
-    <el-form ref="formRef" :model="detailForm" label-width="120px">
+    <el-form
+      ref="formRef"
+      :model="detailForm"
+      label-width="120px"
+      :rules="formRules"
+    >
       <el-row class="row-flex">
         <el-col :span="12">
           <el-form-item label="船舶名称" prop="name">
@@ -128,8 +139,27 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="所属单位" prop="unit">
-            <el-input v-model="detailForm.unit" />
+          <el-form-item label="所属单位" prop="departmentId">
+            <el-popover v-model:visible="visible">
+              <template #reference>
+                <el-input v-model="detailForm.unit" disabled>
+                  <template #append>
+                    <el-button :icon="Plus" @click="visible = true"></el-button>
+                  </template>
+                </el-input>
+              </template>
+              <el-tree
+                style="height: 250px; overflow: auto"
+                highlight-current
+                check-on-click-node
+                ref="paramsTree"
+                :data="deptMentData"
+                node-key="ID"
+                :props="deptProp"
+                @node-click="deptNodeClick"
+                :draggable="false"
+              ></el-tree>
+            </el-popover>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -175,7 +205,7 @@
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="updateData" type="primary">保存</el-button>
+        <el-button @click="updateData" type="primary" v-loading="updateDataLoading">保存</el-button>
         <el-button @click="dialogVisible = false">关闭</el-button>
       </span>
     </template>
@@ -184,15 +214,17 @@
 
 <script lang="ts" setup>
 import { api } from "@/axios/api";
-import { Edit, User, View } from "@element-plus/icons-vue";
+import { Edit, User, View, Plus } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
 let tableMaxHeight = ref("100%");
 const { proxy } = getCurrentInstance() as any;
+let visible = ref(false);
 onMounted(() => {
   rerenderTable();
   window.addEventListener("resize", rerenderTable);
   getList();
+  getDeptList();
 });
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
@@ -206,7 +238,29 @@ let jsonForm = reactive({
   cover: false,
   jsonFile: "",
 });
-
+const formRules = reactive({
+  name: [
+    {
+      required: true,
+      message: "请输入船舶名称",
+      trigger: "blur",
+    },
+  ],
+  no: [
+    {
+      required: true,
+      message: "请输入船舶代号",
+      trigger: "blur",
+    },
+  ],
+  departmentId: [
+    {
+      required: true,
+      message: "请选择单位",
+      trigger: "blur",
+    },
+  ],
+});
 let page = ref(1);
 let limit = ref(25);
 let total = ref(0);
@@ -217,6 +271,7 @@ let detailForm = reactive({
   name: "",
   no: "",
   unit: "",
+  departmentId: "",
   css: "",
   imoNo: "",
   shipType: "",
@@ -239,23 +294,11 @@ const changeXmlFile = (file: any) => {
   xmlFile = file;
 };
 
-const importXml = (shipId: any) => {
-  // if (xmlFile) {
-  //   let formData = new FormData();
-  //   formData.append("file", xmlFile.raw);
-  //   axios({
-  //     url: "/api/gasImport/importEquipParasData.rdm/"+shipId,
-  //     method: "POST",
-  //     data: formData,
-  //   });
-  // }
-};
+const importXml = (shipId: any) => {};
 
-const deleteData=(shipId:any)=>{
-  api.ship.deleteData({id:shipId}).then((data:any)=>{
-    
-  })
-}
+const deleteData = (shipId: any) => {
+  api.ship.deleteData({ id: shipId }).then((data: any) => {});
+};
 let tableData = ref([]);
 let rules = ref([{}]);
 const getList = () => {
@@ -267,26 +310,46 @@ const getList = () => {
     }
   });
 };
-
+const formRef = ref(null);
+let updateDataLoading = ref(false)
 const updateData = () => {
-  if (crudStatus.value === "add") {
-    api.ship.insertShipData(detailForm).then((data: any) => {
-      if (data.success) {
-        ElMessage.success("保存成功");
-        dialogVisible.value = false;
-        getList();
+  updateDataLoading.value = true
+  formRef.value.validate((valid: Boolean) => {
+    if (valid) {
+      if (crudStatus.value === "add") {
+        api.ship.insertShipData(detailForm).then((data: any) => {
+          if (data.success) {
+            updateDataLoading.value =false
+            ElMessage.success("保存成功");
+            dialogVisible.value = false;
+            getList();
+          }else{
+            updateDataLoading.value =false
+            ElMessage.error("保存失败");
+          }
+        }).catch((error:any) => {
+          updateDataLoading.value =false
+        });
+      } else if (crudStatus.value === "edit") {
+        api.ship.updateData(detailForm).then((data: any) => {
+          console.log("data", data);
+          if (data.success) {
+            updateDataLoading.value =false
+            ElMessage.success("修改成功");
+            dialogVisible.value = false;
+            getList();
+          }else{
+            updateDataLoading.value =false
+            ElMessage.success("修改失败");
+          }
+        }).catch(error => {
+          updateDataLoading.value =false
+        });
       }
-    });
-  } else if (crudStatus.value === "edit") {
-    api.ship.updateData(detailForm).then((data: any) => {
-      console.log("data", data);
-      if (data.success) {
-        ElMessage.success("修改成功");
-        dialogVisible.value = false;
-        getList();
-      }
-    });
-  }
+    }else{
+      updateDataLoading.value=false
+    }
+  });
 };
 const addData = () => {
   crudStatus.value = "add";
@@ -322,6 +385,22 @@ const editRow = (row: any) => {
     detailForm.designSpeed = data[0].DESIGN_SPEED_4127;
     dialogVisible.value = true;
   });
+};
+// 获取单位列表
+let deptMentData = ref([]);
+let deptProp = reactive({ children: "children", label: "name" });
+const getDeptList = () => {
+  api.common.deptList({ node: -1 }).then((data: any) => {
+    console.log("data", data);
+    if (data.success) {
+      deptMentData.value = data.results;
+    }
+  });
+};
+const deptNodeClick = (node: any, data: any) => {
+  detailForm.unit = node.name;
+  detailForm.departmentId = node.id;
+  visible.value = false;
 };
 </script>
 
@@ -382,11 +461,6 @@ const editRow = (row: any) => {
 ::v-deep .el-scrollbar__view {
   height: 100%;
 }
-// ::v-deep .el-table__body-wrapper {
-//     height: 200px; /* 滚动条整体高 必须项 */
-//     border-right: none;
-//     overflow-y: scroll;/* overflow-y为了不出现水平滚动条*/
-// }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
   border-bottom: 0px solid var(--el-table-border-color);
@@ -397,7 +471,16 @@ const editRow = (row: any) => {
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
-
+::v-deep .el-table__fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
+}
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;

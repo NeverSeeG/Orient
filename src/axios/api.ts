@@ -24,8 +24,8 @@ class api {
     },
     deptList: (params: any) => Request.get("/api/dept/getByPid.rdm", params),
     deptTreeList: (params: any) => Request.get("/api/dept/list.rdm", params),
-    saveDept: (params?: any) => Request.post("/api/dept/create.rdm", params),
-    updateDept: (params?: any) => Request.post("/api/dept/update.rdm", params),
+    saveDept: (params?: any) => Request.formData("/api/dept/create.rdm", params),
+    updateDept: (params?: any) => Request.formData("/api/dept/update.rdm", params),
     deleteDept: (toDelIds: string) => {
       return axios({
         url: "/api/role/delete.rdm",
@@ -163,7 +163,7 @@ class api {
       Request.get("/api/gasEquipParas/getCommandParasCombo.rdm", params),
     /**
      *  获取指令列表
-     * @param params no（船舶代号）、opNo（参数代号字符串，比如“zfcs1, zfcs2”）、startTime（开始时间，格式“yyyy-MM-dd hh:mm:ss”）、endTime（结束时间格式“yyyy-MM-dd hh:mm:ss”）
+     * @param params page:第几页,limit:每页多少条 no（船舶代号）、opNo（参数代号字符串，比如“zfcs1, zfcs2”）、startTime（开始时间，格式“yyyy-MM-dd hh:mm:ss”）、endTime（结束时间格式“yyyy-MM-dd hh:mm:ss”）
      * @returns  List<Map<String, String>>值：OpTime（发送时间）、OpName（指令名称）、
      * ExeData（指令值）、SendResult（发送结果）、TimeOut（执行结果）
      *  */

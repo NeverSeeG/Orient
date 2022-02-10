@@ -49,11 +49,6 @@
                 </template>
               </el-menu>
             </el-scrollbar>
-            <!-- <el-button @click="routeJump('/home/shipSummary')">船舶汇总</el-button>
-            <el-button @click="routeJump('/home/admin')">船舶管理</el-button>
-            <el-button @click="routeJump('/home/companyAdmin')">单位管理</el-button>
-            <el-button @click="routeJump('/home/roleAdmin')">角色管理</el-button>
-            <el-button @click="routeJump('/home/userAdmin')">用户管理</el-button> -->
           </div>
         </el-aside>
         <el-main>

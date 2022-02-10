@@ -101,7 +101,9 @@
     </el-form>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="saveData" type="primary">保存</el-button>
+        <el-button @click="saveData" v-loading="saveLoading" type="primary"
+          >保存</el-button
+        >
         <el-button @click="dialogVisible = false">关闭</el-button>
       </span>
     </template>
@@ -113,6 +115,7 @@ import { api } from "@/axios/api";
 import { Delete, Edit } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getCurrentInstance, onMounted, reactive, ref } from "vue";
+import { cloneDeep } from "lodash";
 let tableMaxHeight = ref("100%");
 const { proxy } = getCurrentInstance() as any;
 onMounted(() => {
@@ -132,6 +135,7 @@ let tableData = ref([]);
 let dialogVisible = ref(false);
 let dialogTitle = ref("新增");
 let crudStatus = ref("add");
+let saveLoading = ref(false);
 
 let state = reactive({ form: {} });
 
@@ -154,13 +158,14 @@ const getDeptList = () => {
 };
 
 const editRow = (row: any) => {
-  state.form = row;
+  state.form = cloneDeep(row);
   crudStatus.value = "edit";
   dialogTitle.value = "编辑";
   dialogVisible.value = true;
 };
 
 const addDept = (row: any) => {
+  state.form = {};
   crudStatus.value = "add";
   dialogTitle.value = "新增";
   dialogVisible.value = true;
@@ -168,37 +173,55 @@ const addDept = (row: any) => {
 let pid: string = "-1";
 const rowClick = (row: any, column: any, event: any) => {
   pid = row.id;
+  console.log("pid: ", pid);
 };
 const saveData = () => {
+  saveLoading.value = true;
   if (crudStatus.value === "add") {
     state.form.pid = pid;
-    api.common.saveDept(state.form).then((data: any) => {
-      console.log("data", data);
-      if (data.success) {
-        ElMessage.success(data.msg);
-        getDeptList();
-        dialogVisible.value = false;
-      }
-    });
+    console.log("state.form: ", state.form);
+    api.common
+      .saveDept(state.form)
+      .then((data: any) => {
+        if (data.success) {
+          ElMessage.success(data.msg);
+          getDeptList();
+          dialogVisible.value = false;
+        } else {
+          ElMessage.error(data.msg);
+        }
+        saveLoading.value = false;
+      })
+      .catch(() => {
+        saveLoading.value = false;
+      });
   } else if (crudStatus.value === "edit") {
-    api.common.updateDept(state.form).then((data: any) => {
-      console.log("data", data);
-      if (data.success) {
-        ElMessage.success(data.msg);
-        getDeptList();
-        dialogVisible.value = false;
-      }
-    });
+    api.common
+      .updateDept(state.form)
+      .then((data: any) => {
+        console.log("data", data);
+        if (data.success) {
+          ElMessage.success(data.msg);
+          getDeptList();
+          dialogVisible.value = false;
+        } else {
+          ElMessage.error(data.msg);
+        }
+        saveLoading.value = false;
+      })
+      .catch(() => {
+        saveLoading.value = false;
+      });
   }
 };
 
 const deleteRow = (id: string) => {
-   api.common.deleteDept(id).then((data: any) => {
-      if(data.success){
-        ElMessage.success(data.msg)
-        getDeptList()
-      }
-    });
+  api.common.deleteDept(id).then((data: any) => {
+    if (data.success) {
+      ElMessage.success(data.msg);
+      getDeptList();
+    }
+  });
 };
 </script>
 
@@ -264,6 +287,18 @@ const deleteRow = (id: string) => {
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
+
+::v-deep .el-table__fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
+}
+
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;
@@ -311,4 +346,5 @@ const deleteRow = (id: string) => {
 ::v-deep .el-dialog {
   --el-dialog-bg-color: #131e3c;
 }
+
 </style>

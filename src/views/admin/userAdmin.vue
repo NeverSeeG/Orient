@@ -61,21 +61,25 @@
           :row-style="{
             background: '#131E3C',
             fontSize: '14px',
-            color: '#FFFFFF',
+            color: '#FFFFFF',height: '48px',
           }"
         >
           <el-table-column type="index" width="50" fixed="left" />
           <el-table-column type="selection" width="50" fixed="left" />
           <el-table-column prop="userName" label="账号" />
           <el-table-column prop="allName" label="姓名" />
-          <el-table-column prop="department" label="部门" >
+          <el-table-column prop="department" label="部门">
             <template #default="scope">
-              {{scope.row.department?JSON.parse(scope.row.department).text:''}}
+              {{
+                scope.row.department
+                  ? JSON.parse(scope.row.department).text
+                  : ""
+              }}
             </template>
           </el-table-column>
-          <el-table-column prop="grade" label="密级" >
+          <el-table-column prop="grade" label="密级">
             <template #default="scope">
-              {{scope.row.grade?JSON.parse(scope.row.grade).value:''}}
+              {{ scope.row.grade ? JSON.parse(scope.row.grade).value : "" }}
             </template>
           </el-table-column>
           <el-table-column fixed="left" label="操作" width="200">
@@ -173,8 +177,8 @@
         <el-col :span="12">
           <el-form-item label="邮箱" prop="email">
             <el-input v-model="dialogState.form.email" />
-          </el-form-item> </el-col
-        >
+          </el-form-item>
+        </el-col>
         <el-col :span="12">
           <el-form-item label="性别" prop="sex">
             <el-select style="width: 100%" v-model="dialogState.form.sex">
@@ -241,12 +245,12 @@ import type { ElTree } from "element-plus";
 import { ElMessage } from "element-plus";
 import { cloneDeep } from "lodash";
 import {
-getCurrentInstance,
-nextTick,
-onMounted,
-reactive,
-ref,
-watch
+  getCurrentInstance,
+  nextTick,
+  onMounted,
+  reactive,
+  ref,
+  watch,
 } from "vue";
 let tableMaxHeight = ref("100%");
 const { proxy } = getCurrentInstance() as any;
@@ -255,9 +259,9 @@ let page = ref(1);
 let limit = ref(25);
 let total = ref(0);
 let enumCombobox = reactive({
-    sex:[] as Array<EnumCombobox>,
-    post:[] as Array<EnumCombobox>,
-    grade:[] as Array<EnumCombobox>,
+  sex: [] as Array<EnumCombobox>,
+  post: [] as Array<EnumCombobox>,
+  grade: [] as Array<EnumCombobox>,
 });
 onMounted(async () => {
   rerenderTable();
@@ -552,11 +556,16 @@ const deleteUser = (toDelIds?: string) => {
 ::v-deep .el-scrollbar__view {
   height: 100%;
 }
-// ::v-deep .el-table__body-wrapper {
-//     height: 200px; /* 滚动条整体高 必须项 */
-//     border-right: none;
-//     overflow-y: scroll;/* overflow-y为了不出现水平滚动条*/
-// }
+::v-deep .el-table__fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
+}
 ::v-deep.el-table {
   --el-table-bg-color: ;
   --el-table-border-color: #04a0ce;
@@ -664,4 +673,6 @@ const deleteUser = (toDelIds?: string) => {
   line-height: 32px;
   color: #ffffff !important;
 }
+
+// 设置表格的行高
 </style>

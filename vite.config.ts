@@ -6,7 +6,7 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:8080/OrientTDM',
+                target: 'http://localhost:8989/CheckTDM',
                 changeOrigin: true,
                 ws:true,
                 rewrite: (path) => path.replace(/^\/api/, '')

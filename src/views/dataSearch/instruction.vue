@@ -128,6 +128,17 @@
             <el-table-column prop="TimeOut" label="执行结果" />
           </el-table>
         </div>
+        <div class="pagination">
+          <el-pagination
+            @size-change="sizeChange"
+            @current-change="currentChange"
+            layout="prev, pager, next,sizes"
+            :page-sizes="[25, 50, 100, 200]"
+            :current-page.sync="page"
+            :page-size="limit"
+            :total="total"
+          ></el-pagination>
+        </div>
       </div>
     </div>
   </el-scrollbar>
@@ -215,7 +226,14 @@ const shipChange = (val: String) => {
     .getCommandParasCombo({ shipId: queryForm.no })
     .then((data: any) => {
       if (data) {
-        dataInfo.params = data;
+        let equipTreeData = [
+          {
+            NAME: "全选",
+            VALUE: "-9999",
+            children: data,
+          },
+        ];
+        dataInfo.params = equipTreeData;
       } else {
         dataInfo.params = [];
       }
@@ -234,11 +252,16 @@ const shipClear = () => {
   // 参数
   dataInfo.params = [];
 };
+let page = ref(1);
+let limit = ref(30);
+let total = ref(0);
 class QueryParams {
   no: string = shipMap.get(queryForm.no) || "";
   opNo: string = "";
   startTime: string = queryForm.startTime;
   endTime: string = queryForm.endTime;
+  page:Number =  page.value;
+  limit:Number =  limit.value;
   constructor(opNo: string) {
     this.opNo = opNo;
   }
@@ -256,8 +279,9 @@ const query = () => {
   let params = new QueryParams(paramsTree.join(","));
   console.log("params", params);
   api.shipSummary.findCmdDataByMongo(params).then((data: any) => {
-    if (data) {
-      dataInfo.tableData = data;
+    if (data.success) {
+      dataInfo.tableData = data.results;
+      total.value = data.totalProperty
     }
   });
 };
@@ -284,6 +308,16 @@ const exportData = () => {
       window.location.href = path;
     }
   });
+};
+
+const sizeChange = (val: number) => {
+  page.value = val;
+  query();
+};
+
+const currentChange = (val: number) => {
+  limit.value = val;
+  query();
 };
 </script>
 <style lang="scss" scoped>
@@ -348,7 +382,15 @@ const exportData = () => {
   background-color: #ddd;
   border-radius: 3px;
 }
-
+::v-deep .el-table .el-table__cell {
+  padding: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  position: relative;
+  text-align: left;
+}
 ::v-deep .el-scrollbar__view {
   height: 100%;
 }
@@ -362,7 +404,16 @@ const exportData = () => {
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
-
+::v-deep .el-table__fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
+}
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;
@@ -407,5 +458,51 @@ const exportData = () => {
   --el-button-active-text-color: var(--el-color-white);
   --el-button-active-border-color: var(--el-color-primary);
   background-color: #131e3c;
+}
+
+::v-deep .el-pagination {
+  --el-pagination-font-size: 13px;
+  --el-pagination-bg-color: ;
+  --el-pagination-text-color: ;
+  --el-pagination-border-radius: 3px;
+  --el-pagination-button-color: #ffffff;
+  --el-pagination-button-width: 35.5px;
+  --el-pagination-button-height: 28px;
+  --el-pagination-button-disabled-color: var(--el-color-primary);
+  --el-pagination-button-disabled-bg-color: ;
+  --el-pagination-hover-color: var(--el-color-primary);
+  --el-pagination-height-extra-small: 22px;
+  --el-pagination-line-height-extra-small: var(
+    --el-pagination-height-extra-small
+  );
+  white-space: nowrap;
+  padding: 2px 5px;
+  color: white;
+  font-weight: 700;
+}
+
+.pagination {
+  border-radius: 0;
+  padding: 0 6px;
+  width: 100%;
+  z-index: 1000;
+
+  &.pageHeight {
+    height: 51px;
+    line-height: 51px;
+  }
+
+  .el-pagination {
+    width: 100%;
+    margin: 8px auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+::v-deep .el-pager li.btn-quicknext,
+.el-pager li.btn-quickprev {
+  line-height: 32px;
+  color: #ffffff !important;
 }
 </style>

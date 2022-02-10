@@ -314,11 +314,6 @@ const detail = (row: { ShipName: String; ShipNo: String }) => {
 ::v-deep .el-scrollbar__view {
   height: 100%;
 }
-// ::v-deep .el-table__body-wrapper {
-//     height: 200px; /* 滚动条整体高 必须项 */
-//     border-right: none;
-//     overflow-y: scroll;/* overflow-y为了不出现水平滚动条*/
-// }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
   border-bottom: 1px solid var(--el-table-border-color);
@@ -329,7 +324,16 @@ const detail = (row: { ShipName: String; ShipNo: String }) => {
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
-
+::v-deep .el-table__fixed::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px !important;
+    background-color: #04a0ce;
+    z-index: 4;
+}
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;

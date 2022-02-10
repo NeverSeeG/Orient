@@ -264,7 +264,16 @@ const getList = () => {
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
-
+::v-deep .el-table__fixed::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px !important;
+    background-color: #04a0ce;
+    z-index: 4;
+}
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;

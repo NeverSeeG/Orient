@@ -689,7 +689,16 @@ const saveData = () => {
     rgba(2, 153, 210, 0) 100%
   );
 }
-
+::v-deep .el-table__fixed::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px !important;
+    background-color: #04a0ce;
+    z-index: 4;
+}
 ::v-deep tbody tr:hover > td,
 ::v-deep tbody tr.hover-row > td {
   background: linear-gradient(

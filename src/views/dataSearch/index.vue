@@ -37,7 +37,6 @@
             clearable
             placeholder="请选择船舶"
             style="width: 200px; margin-right: 8px"
-            @change="shipChange"
             @clear="shipClear"
           >
             <el-option
@@ -51,7 +50,11 @@
 
           <el-popover trigger="click" :width="200">
             <template #reference>
-              <el-button type="primary" size="default" plain
+              <el-button
+                type="primary"
+                size="default"
+                plain
+                @click="equipTreeShow"
                 >选择设备<el-icon class="el-icon--right"><arrow-down /></el-icon
               ></el-button>
             </template>
@@ -61,9 +64,11 @@
               :data="dataInfo.equipMentData"
               node-key="VALUE"
               highlight-current
-              check-on-click-node
+              default-expand-all
+              @check-change="equipMentDataChange"
               :props="dataInfo.props"
               :draggable="false"
+              :default-checked-keys="equipMentCheckedKeys"
               show-checkbox
             ></el-tree>
           </el-popover>
@@ -76,12 +81,14 @@
             <el-tree
               style="height: 250px; overflow: auto"
               highlight-current
-              check-on-click-node
               ref="paramsTree"
               :data="dataInfo.equipmentParams"
               node-key="ID"
               :props="dataInfo.paramsProps"
               :draggable="false"
+              default-expand-all
+              :default-checked-keys="equipParamsCheckKeys"
+              @check-change="equipMentParamsChange"
               show-checkbox
             ></el-tree>
           </el-popover>
@@ -175,6 +182,8 @@ import { api } from "@/axios/api";
 import { User } from "@/utils/user";
 import { ArrowDown, Download, Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
+import type { ElTree } from "element-plus";
+import { includes, indexOf, slice } from "lodash";
 import { getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
 let tableMaxHeight = ref("100%");
 const { proxy } = getCurrentInstance() as any;
@@ -188,12 +197,12 @@ onMounted(() => {
 const rerenderTable = () => {
   if (proxy.$refs.tableBody) {
     let tableBodyHeight = proxy.$refs.tableBody.clientHeight;
-    
+
     tableMaxHeight.value =
       tableBodyHeight <= 0 ? "100%" : tableBodyHeight - 32 + "px";
   }
 };
-let shipOwnerSelectStaus = ref(false)
+let shipOwnerSelectStaus = ref(false);
 let shipMap = new Map();
 let dataInfo = reactive({
   props: { label: "NAME", value: "VALUE" },
@@ -228,11 +237,11 @@ const getShipUnitCombo = () => {
     .then((data: any) => {
       if (data) {
         dataInfo.shipOwnerOptions = data;
-        shipOwnerSelectStaus.value = false
-        if(data instanceof Array && data.length ===1){
-          shipOwnerSelectStaus.value = true
+        shipOwnerSelectStaus.value = false;
+        if (data instanceof Array && data.length === 1) {
+          shipOwnerSelectStaus.value = true;
           queryForm.shipowner = data[0].VALUE;
-          shipOwnerChange(data[0].VALUE)
+          shipOwnerChange(data[0].VALUE);
         }
       }
     });
@@ -249,22 +258,63 @@ const shipOwnerChange = (val: String) => {
           data.forEach((item) => {
             shipMap.set(item.VALUE, item.LABEL);
           });
-          shipChange(queryForm.no);
+          // shipChange(queryForm.no);
         }
       }
     });
 };
 
 // 船舶选择后触发事件 加载设备
-const shipChange = (val: String) => {
-  api.shipSummary.getEquipmentForShipId({ shipId: val }).then((data: any) => {
-    if (data) {
-      dataInfo.equipMentData = data;
-    } else {
-      dataInfo.equipMentData = [];
-    }
-  });
+// const shipChange = (val: String) => {
+//   // 如果存在 选中的回显
+//   api.shipSummary.getEquipmentForShipId({ shipId: val }).then((data: any) => {
+//     if (data) {
+//       dataInfo.equipMentData = data;
+//     } else {
+//       dataInfo.equipMentData = [];
+//     }
+//   });
+// };
+let equipMentCheckedKeys = ref([]);
+let equipParamsCheckKeys = ref([]);
+const equipTreeShow = () => {
+  api.shipSummary
+    .getEquipmentForShipId({ shipId: queryForm.no })
+    .then((data: any) => {
+      if (data) {
+        let equipTreeData = [
+          {
+            NAME: "全选",
+            VALUE: "-9999",
+            children: data,
+          },
+        ];
+        dataInfo.equipMentData = equipTreeData;
+        proxy.$refs.tree.setCheckedKeys([], false);
+        equipMentCheckedKeys.value = [...equipCheckNodeValue];
+      } else {
+        proxy.$refs.tree.setCheckedKeys([], false);
+        dataInfo.equipMentData = [];
+      }
+    });
 };
+let equipCheckNodeValue = new Set<String>();
+let paramsTreeCheckNodeValue = new Set<String>();
+const equipMentDataChange = (node: any, checked: any) => {
+  if (checked) {
+    equipCheckNodeValue.add(node.VALUE);
+  } else if (includes([...equipCheckNodeValue], node.VALUE)) {
+    equipCheckNodeValue.delete(node.VALUE);
+  }
+};
+const equipMentParamsChange = (node: any, checked: any) => {
+  if (checked) {
+    paramsTreeCheckNodeValue.add(node.VALUE);
+  } else if (includes([...paramsTreeCheckNodeValue], node.VALUE)) {
+    paramsTreeCheckNodeValue.delete(node.VALUE);
+  }
+};
+
 // 船东清空事件
 const shipOwnerClear = () => {
   queryForm.no = "";
@@ -273,6 +323,8 @@ const shipOwnerClear = () => {
   dataInfo.equipMentData = [];
   queryForm.equipmentParams = [];
   dataInfo.equipmentParams = [];
+  equipMentCheckedKeys.value = [];
+  equipParamsCheckKeys.value = [];
 };
 
 // 船舶清空事件
@@ -282,6 +334,8 @@ const shipClear = () => {
   dataInfo.equipMentData = [];
   queryForm.equipmentParams = [];
   dataInfo.equipmentParams = [];
+  equipMentCheckedKeys.value = [];
+  equipParamsCheckKeys.value = [];
 };
 class QueryParams {
   no: string = shipMap.get(queryForm.no);
@@ -385,14 +439,13 @@ const query = async () => {
     }
   }
   dataInfo.tableData = data;
-  
 };
 // 导出
 const exportData = () => {
   let equips = proxy.$refs.tree.getCheckedNodes();
-  
+
   let paraIds = proxy.$refs.paramsTree.getCheckedNodes();
-  
+
   if (equips.length === 0) {
     ElMessage({
       message: "请先选择设备",
@@ -465,7 +518,7 @@ const exportData = () => {
     startTime: queryForm.startTime,
     endTime: queryForm.endTime,
   };
-  
+
   api.shipSummary.exportParasData(params).then((data: any) => {
     if (data.success && data.results !== null) {
       let path = "/api/orientForm/download.rdm?fileId=" + data.results.fileid;
@@ -504,10 +557,19 @@ const paramsTreeShow = () => {
     .getParasCombo({ equipId: equipId.join(",") })
     .then((data: any) => {
       if (data) {
-        dataInfo.equipmentParams = data;
+        let equipParamsData = [
+          {
+            NAME: "全选",
+            VALUE: "-9999",
+            children: data,
+          },
+        ];
+        dataInfo.equipmentParams = equipParamsData;
         data.forEach((item: any) => {
           equipMentParams.set(item.ID, item.NAME_4129);
         });
+        proxy.$refs.paramsTree.setCheckedKeys([], false);
+        equipParamsCheckKeys.value = [...paramsTreeCheckNodeValue];
       } else {
         dataInfo.equipmentParams = [];
       }
@@ -645,7 +707,7 @@ const headerClick = (
     },
     series: series,
   };
-  
+
   if (chartColumnProps.size > 0) {
     statisticsStatus.value = true;
   }
@@ -746,12 +808,27 @@ const once = (index: number) => {
   border-bottom: 0px solid var(--el-table-border-color);
 }
 ::v-deep.el-table {
-  --el-table-bg-color: ;
+  --el-table-bg-color: #04a0ce;
   --el-table-border-color: #04a0ce;
   --el-table-border: 1px solid #04a0ce;
   --el-table-row-hover-bg-color: ;
 }
-
+::v-deep .el-table__fixed::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px !important;
+  background-color: #04a0ce;
+  z-index: 4;
+}
+::v-deep .el-table__fixed {
+  height: 100% !important; //设置高优先，以覆盖内联样式
+}
+::v-deep .el-table__fixed-right {
+  height: 100% !important; //设置高优先，以覆盖内联样式
+}
 ::v-deep .el-form-item__label {
   flex: 0 0 auto;
   text-align: right;
