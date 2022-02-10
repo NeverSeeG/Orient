@@ -463,7 +463,7 @@ const deptNodeClick = (node: any, data: any) => {
 }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
-  border-bottom: 0px solid var(--el-table-border-color);
+  border-bottom: 1px solid var(--el-table-border-color);
 }
 ::v-deep.el-table {
   --el-table-bg-color: ;

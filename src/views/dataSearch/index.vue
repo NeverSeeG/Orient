@@ -38,6 +38,7 @@
             placeholder="请选择船舶"
             style="width: 200px; margin-right: 8px"
             @clear="shipClear"
+            @change="shipChange"
           >
             <el-option
               v-for="item in dataInfo.shipOptions"
@@ -72,9 +73,13 @@
               show-checkbox
             ></el-tree>
           </el-popover>
-          <el-popover trigger="click" @show="paramsTreeShow">
+          <el-popover trigger="click" :width="250">
             <template #reference>
-              <el-button type="primary" size="default" plain
+              <el-button
+                type="primary"
+                size="default"
+                plain
+                @click="paramsTreeShow"
                 >选择参数<el-icon class="el-icon--right"><arrow-down /></el-icon
               ></el-button>
             </template>
@@ -181,7 +186,7 @@
 import { api } from "@/axios/api";
 import { User } from "@/utils/user";
 import { ArrowDown, Download, Search } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElLoading } from "element-plus";
 import type { ElTree } from "element-plus";
 import { includes, indexOf, slice } from "lodash";
 import { getCurrentInstance, nextTick, onMounted, reactive, ref } from "vue";
@@ -281,7 +286,7 @@ const equipTreeShow = () => {
   api.shipSummary
     .getEquipmentForShipId({ shipId: queryForm.no })
     .then((data: any) => {
-      if (data) {
+      if (data && data instanceof Array && data.length > 0) {
         let equipTreeData = [
           {
             NAME: "全选",
@@ -309,9 +314,9 @@ const equipMentDataChange = (node: any, checked: any) => {
 };
 const equipMentParamsChange = (node: any, checked: any) => {
   if (checked) {
-    paramsTreeCheckNodeValue.add(node.VALUE);
-  } else if (includes([...paramsTreeCheckNodeValue], node.VALUE)) {
-    paramsTreeCheckNodeValue.delete(node.VALUE);
+    paramsTreeCheckNodeValue.add(node.ID);
+  } else if (includes([...paramsTreeCheckNodeValue], node.ID)) {
+    paramsTreeCheckNodeValue.delete(node.ID);
   }
 };
 
@@ -325,6 +330,8 @@ const shipOwnerClear = () => {
   dataInfo.equipmentParams = [];
   equipMentCheckedKeys.value = [];
   equipParamsCheckKeys.value = [];
+  equipCheckNodeValue = new Set();
+  paramsTreeCheckNodeValue = new Set();
 };
 
 // 船舶清空事件
@@ -336,6 +343,12 @@ const shipClear = () => {
   dataInfo.equipmentParams = [];
   equipMentCheckedKeys.value = [];
   equipParamsCheckKeys.value = [];
+  equipCheckNodeValue = new Set();
+  paramsTreeCheckNodeValue = new Set();
+};
+const shipChange = () => {
+  equipCheckNodeValue = new Set();
+  paramsTreeCheckNodeValue = new Set();
 };
 class QueryParams {
   no: string = shipMap.get(queryForm.no);
@@ -355,7 +368,14 @@ class ParamsCombo {
   }
 }
 // 查询
-const query = async () => {
+const query = async (e: any) => {
+  let target = e.target;
+  // 根据button组件内容 里面包括一个span标签，如果设置icon，则还包括一个i标签，其他情况请自行观察。
+  // 所以，在我们点击到button组件上的文字也就是span标签上时，直接执行e.target.blur()不会生效，所以要加一层判断。
+  if (target.nodeName == "SPAN" || target.nodeName == "I") {
+    target = e.target.parentNode;
+  }
+  target.blur();
   if (!queryForm.no) {
     ElMessage({
       message: "请先选择船舶进行查询",
@@ -401,7 +421,11 @@ const query = async () => {
       }
     }
   );
-
+  const loading = ElLoading.service({
+    lock: true,
+    text: "数据查询中请稍候...",
+    background: "rgba(0, 0, 0, 0.7)",
+  });
   for (let equipId of equipIds) {
     let params = new QueryParams();
     let columns: { label: String | undefined; prop: string }[] = [];
@@ -425,7 +449,7 @@ const query = async () => {
         if (item === "Time") {
           column.label = "时间";
         }
-        columns.push(column);
+        columns.unshift(column);
       });
     }
     let r = {
@@ -438,6 +462,7 @@ const query = async () => {
       data.push(r);
     }
   }
+  loading.close();
   dataInfo.tableData = data;
 };
 // 导出
@@ -556,11 +581,11 @@ const paramsTreeShow = () => {
   api.shipSummary
     .getParasCombo({ equipId: equipId.join(",") })
     .then((data: any) => {
-      if (data) {
+      if (data && data instanceof Array && data.length > 0) {
         let equipParamsData = [
           {
-            NAME: "全选",
-            VALUE: "-9999",
+            NAME_4129: "全选",
+            ID: "-9999",
             children: data,
           },
         ];
@@ -568,7 +593,7 @@ const paramsTreeShow = () => {
         data.forEach((item: any) => {
           equipMentParams.set(item.ID, item.NAME_4129);
         });
-        proxy.$refs.paramsTree.setCheckedKeys([], false);
+        console.log("paramsTreeCheckNodeValue", paramsTreeCheckNodeValue);
         equipParamsCheckKeys.value = [...paramsTreeCheckNodeValue];
       } else {
         dataInfo.equipmentParams = [];
@@ -805,7 +830,7 @@ const once = (index: number) => {
 // }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
-  border-bottom: 0px solid var(--el-table-border-color);
+  border-bottom: 1px solid var(--el-table-border-color);
 }
 ::v-deep.el-table {
   --el-table-bg-color: #04a0ce;

@@ -86,12 +86,12 @@
             <el-table-column prop="Draft" label="吃水" />
             <el-table-column prop="Speed" label="航速" />
             <el-table-column fixed="right" label="操作" width="200">
-              <template #default>
+              <template #default="scope">
                 <el-button
                   type="text"
                   size="small"
                   :icon="View"
-                  @click="handleClick"
+                  @click="handleClick(scope.row)"
                   >查看实时数据</el-button
                 >
               </template>
@@ -190,6 +190,17 @@ const getList = () => {
     }
   });
 };
+
+const handleClick = (row:any) => {
+  console.log('row',row);
+  let url = ''
+  if(row.ShipNo==='12000DWT'){
+    url = "http://103.46.128.49:15114/dashboard/f695a1d0-4e7e-11ec-a0a2-35367d7921d2?publicId=15fd5600-321c-11ec-bc2a-899e01c28552"
+  }else if (row.ShipNo==='WindRotor1'){
+     url = "http://103.46.128.49:15114/dashboard/89dad170-3234-11ec-9129-736ed14e2d26?publicId=15fd5600-321c-11ec-bc2a-899e01c28552"
+  }
+  window.open(url)
+}
 </script>
 <style lang="scss" scoped>
 .main {

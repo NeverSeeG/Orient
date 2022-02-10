@@ -48,7 +48,7 @@
             >
             </el-option>
           </el-select>
-          <el-popover trigger="click" @show="paramsTreeShow">
+          <el-popover trigger="click" @show="paramsTreeShow" style="width:200px;overflow-y: auto;">
             <template #reference>
               <el-button type="primary" size="default" plain
                 >选择参数<el-icon class="el-icon--right"><arrow-down /></el-icon
@@ -61,6 +61,7 @@
               ref="paramsTree"
               :data="dataInfo.params"
               node-key="NO_4129"
+              default-expand-all
               :props="dataInfo.paramsProps"
               :draggable="false"
               show-checkbox
@@ -102,7 +103,7 @@
         </div>
       </div>
       <div class="content">
-        <div style="height: 100%; margin-top: 8px" ref="tableBody">
+        <div style="height: calc(100% - 50px); margin-top: 8px" ref="tableBody">
           <el-table
             highlight-current-row
             :data="dataInfo.tableData"
@@ -133,7 +134,7 @@
             @size-change="sizeChange"
             @current-change="currentChange"
             layout="prev, pager, next,sizes"
-            :page-sizes="[25, 50, 100, 200]"
+            :page-sizes="[30, 60, 100, 200]"
             :current-page.sync="page"
             :page-size="limit"
             :total="total"
@@ -228,8 +229,8 @@ const shipChange = (val: String) => {
       if (data) {
         let equipTreeData = [
           {
-            NAME: "全选",
-            VALUE: "-9999",
+            NAME_4129: "全选",
+            NO_4129: "-9999",
             children: data,
           },
         ];
@@ -267,7 +268,14 @@ class QueryParams {
   }
 }
 
-const query = () => {
+const query = (e: any) => {
+     let target = e.target;
+    // 根据button组件内容 里面包括一个span标签，如果设置icon，则还包括一个i标签，其他情况请自行观察。
+    // 所以，在我们点击到button组件上的文字也就是span标签上时，直接执行e.target.blur()不会生效，所以要加一层判断。
+    if(target.nodeName == 'SPAN' || target.nodeName == 'I'){
+        target = e.target.parentNode;
+    }
+    target.blur();
   if (!queryForm.no) {
     ElMessage({
       message: "请先选择船舶进行查询",
@@ -311,12 +319,12 @@ const exportData = () => {
 };
 
 const sizeChange = (val: number) => {
-  page.value = val;
+  limit.value = val;
   query();
 };
 
 const currentChange = (val: number) => {
-  limit.value = val;
+  page.value = val;
   query();
 };
 </script>
@@ -385,6 +393,7 @@ const currentChange = (val: number) => {
 ::v-deep .el-table .el-table__cell {
   padding: 0;
   min-width: 0;
+  height:32px;
   box-sizing: border-box;
   text-overflow: ellipsis;
   vertical-align: middle;
@@ -396,7 +405,7 @@ const currentChange = (val: number) => {
 }
 ::v-deep .el-table td.el-table__cell,
 .el-table th.el-table__cell.is-leaf {
-  border-bottom: 0px solid var(--el-table-border-color);
+  border-bottom: 1px solid var(--el-table-border-color);
 }
 ::v-deep.el-table {
   --el-table-bg-color: ;
